@@ -221,7 +221,6 @@
       let groundHeight = 0;
       let groundY = 0;
       let worldWidth = 180000;
-      let worldLeft = 0;
 
       function showFatalOverlay(message) {
         overlayTitle.textContent = '⚠️ Startup Error';
@@ -668,28 +667,90 @@
 
       function drawPlayerWorld() {
         const p = state.player;
+        const phase = state.time * 9;
+        const runSwing = Math.sin(phase) * 18;
+        const isRunning = Math.abs(p.vx) > 10 && p.grounded;
+        const bounce = isRunning ? Math.sin(phase * 2) * 5 : 0;
+        const tilt = p.grounded ? 0 : -0.18;
+
         ctx.save();
-        ctx.translate(p.x, p.y);
+        ctx.translate(p.x + p.w / 2, p.y + p.h / 2 + bounce);
+        ctx.rotate(tilt + (p.vx > 0 ? 0.04 : -0.04));
 
-        ctx.fillStyle = '#ff6b35';
-        ctx.fillRect(12, 22, 26, 38);
-
-        ctx.fillStyle = '#f4a460';
+        // shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.22)';
         ctx.beginPath();
-        ctx.arc(25, 12, 14, 0, Math.PI * 2);
+        ctx.ellipse(0, p.h / 2 + 18, 24, 8, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = '#000';
+        // legs
+        const legLift = isRunning ? runSwing : 0;
+        ctx.strokeStyle = '#1d3557';
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.arc(20, 8, 2.5, 0, Math.PI * 2);
-        ctx.arc(30, 8, 2.5, 0, Math.PI * 2);
+        ctx.moveTo(-8, 18);
+        ctx.lineTo(-10 + legLift * 0.4, 42);
+        ctx.moveTo(10, 18);
+        ctx.lineTo(12 - legLift * 0.4, 42);
+        ctx.stroke();
+
+        // body
+        const bodyGrad = ctx.createLinearGradient(-20, -28, 20, 34);
+        bodyGrad.addColorStop(0, '#4cc9f0');
+        bodyGrad.addColorStop(1, '#1d4ed8');
+        ctx.fillStyle = bodyGrad;
+        ctx.beginPath();
+        ctx.roundRect(-18, -22, 36, 42, 12);
         ctx.fill();
 
-        ctx.strokeStyle = '#000';
+        // shirt / chest panel
+        ctx.fillStyle = '#f7f9ff';
+        ctx.fillRect(-10, -12, 20, 14);
+        ctx.fillStyle = '#ffb703';
+        ctx.fillRect(-6, -10, 12, 7);
+
+        // arms
+        const armSwing = isRunning ? runSwing * 0.8 : 0;
+        ctx.strokeStyle = '#f4a261';
+        ctx.lineWidth = 7;
+        ctx.beginPath();
+        ctx.moveTo(-18, -8);
+        ctx.lineTo(-26 + armSwing * 0.4, 10);
+        ctx.moveTo(18, -8);
+        ctx.lineTo(26 - armSwing * 0.4, 10);
+        ctx.stroke();
+
+        // head
+        const headGrad = ctx.createRadialGradient(-4, -30, 6, 0, -30, 20);
+        headGrad.addColorStop(0, '#f5d7a1');
+        headGrad.addColorStop(1, '#d9a066');
+        ctx.fillStyle = headGrad;
+        ctx.beginPath();
+        ctx.arc(0, -30, 18, 0, Math.PI * 2);
+        ctx.fill();
+
+        // face details
+        ctx.fillStyle = '#221f1f';
+        ctx.beginPath();
+        ctx.arc(-6, -32, 2.2, 0, Math.PI * 2);
+        ctx.arc(6, -32, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#221f1f';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(25, 13, 5, 0, Math.PI);
+        ctx.arc(0, -26, 5, 0.2, Math.PI - 0.2);
         ctx.stroke();
+
+        // backpack / detail
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(-22, -12, 7, 22);
+
+        // shoes
+        ctx.fillStyle = '#111827';
+        ctx.fillRect(-16, 40, 12, 6);
+        ctx.fillRect(4, 40, 12, 6);
 
         ctx.restore();
       }
