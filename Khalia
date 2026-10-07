@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Khalia's Caribbean Adventure</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;background:#74d8ff}
+canvas{display:block;width:100%;height:100%}
+#ui{position:fixed;top:0;left:0;width:100%;padding:18px;display:flex;justify-content:space-between;pointer-events:none;color:white;text-shadow:2px 2px 4px #000;font-weight:bold}
+#title{font-size:22px}
+#score{font-size:20px}
+#start{
+position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+background:linear-gradient(#36bdf5aa,#063b65dd);z-index:5
+}
+.panel{
+background:#fff;padding:30px;border-radius:24px;text-align:center;
+box-shadow:0 15px 40px #0007;max-width:420px;margin:20px
+}
+.panel h1{margin-top:0;color:#073b5c;font-size:32px}
+.panel p{color:#333;line-height:1.5}
+button{
+border:0;border-radius:14px;padding:15px 28px;background:#ffb703;
+font-size:18px;font-weight:bold;color:#3b2600;cursor:pointer;
+box-shadow:0 5px 0 #c17c00
+}
+button:active{transform:translateY(4px);box-shadow:0 1px 0 #c17c00}
+#controls{
+position:fixed;bottom:20px;left:20px;right:20px;
+display:flex;justify-content:space-between;pointer-events:none
+}
+.control{
+pointer-events:auto;width:64px;height:64px;border-radius:50%;
+background:#ffffffaa;border:2px solid white;font-size:30px;
+display:flex;align-items:center;justify-content:center;
+user-select:none
+}
+.group{display:flex;gap:12px}
+#jump{width:75px;height:75px;background:#ffb703}
+</style>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="ui">
+  <div id="title">🌴 Khalia's Caribbean Adventure</div>
+  <div id="score">⭐ 0</div>
+</div>
+
+<div id="start">
+  <div class="panel">
+    <h1>🌴 Khalia's Caribbean Adventure</h1>
+    <p>
+      Help Khalia run, jump and explore a colourful Caribbean island.
+      Collect stars and coconuts while avoiding the obstacles!
+    </p>
+    <p><b>Keyboard:</b> ← → to move · Space to jump</p>
+    <button onclick="startGame()">START ADVENTURE</button>
+  </div>
+</div>
+
+<div id="controls">
+  <div class="group">
+    <div class="control" id="left">◀</div>
+    <div class="control" id="right">▶</div>
+  </div>
+  <div class="control" id="jump">⬆</div>
+</div>
+
+<script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+let W,H;
+function resize(){
+  W=canvas.width=innerWidth*devicePixelRatio;
+  H=canvas.height=innerHeight*devicePixelRatio;
+  canvas.style.width=innerWidth+"px";
+  canvas.style.height=innerHeight+"px";
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+resize();
+addEventListener("resize",resize);
+
+let running=false;
+let score=0;
+let keys={};
+let camera=0;
+
+const player={
+ x:180,y:0,w:42,h:62,
+ vx:0,vy:0,
+ speed:5,
+ jump:-14,
+ grounded:false
+};
+
+let platforms=[];
+let stars=[];
+let trees=[];
+let clouds=[];
+
+function createWorld(){
+ platforms=[];
+ stars=[];
+ trees=[];
+ clouds=[];
+
+ platforms.push({x:-500,y:innerHeight-100,w:4000,h:100});
+
+ for(let x=500;x<3800;x+=350){
+   platforms.push({
+     x:x,
+     y:innerHeight-100-Math.random()*100,
+     w:170+Math.random()*80,
+     h:25
+   });
+ }
+
+ for(let x=400;x<4000;x+=250){
+   stars.push({
+     x:x,
+     y:innerHeight-180-Math.random()*180,
+     r:10,
+     taken:false
+   });
+ }
+
+ for(let x=50;x<4000;x+=280){
+   trees.push({
+     x:x+Math.random()*100,
+     y:innerHeight-100,
+     s:.8+Math.random()*.6i
+   });
+ }
+
+ for(let x=0;x<5000;x+=500){
+   clouds.push({
+     x:x+Math.random()*250,
+     y:50+Math.random()*150,
+     s:.7+Math.random()*.7
+   });
+ }
+
+ player.x=180;
+ player.y=innerHeight-170;
+ player.vx=0;
+ player.vy=0;
+ camera=0;
+ score=0;
+}
+
+function startGame(){
+ document.getElementById("start").style.display="none";
+ running=true;
+ createWorld();
+}
+
+function keyDown(e){
+ keys[e.key]=true;
+ if(e.key===" "||e.key==="ArrowUp") jump();
+}
+function keyUp(e){keys[e.key]=false}
+addEventListener("keydown",keyDown);
+addEventListener("keyup",keyUp);
+
+function jump(){
+ if(player.grounded){
+   player.vy=player.jump;
+   player.grounded=false;
+ }
+}
+
+function button(id,key){
+ const b=document.getElementById(id);
+ b.addEventListener("touchstart",e=>{
+   e.preventDefault();
+   if(key==="jump") jump();
+   else keys[key]=true;
+ });
+ b.addEventListener("touchend",e=>{
+   e.preventDefault();
+   if(key!=="jump") keys[key]=false;
+ });
+ b.addEventListener("mousedown",()=>{
+   if(key==="jump") jump();
+   else keys[key]=true;
+ });
+ b.addEventListener("mouseup",()=>{
+   if(key!=="jump") keys[key]=false;
+ });
+}
+button("left","ArrowLeft");
+button("right","ArrowRight");
+button("jump","jump");
+
+function drawSky(){
+ const g=ctx.createLinearGradient(0,0,0,innerHeight);
+ g.addColorStop(0,"#55c9f5");
+ g.addColorStop(.65,"#a7e8ff");
+ g.addColorStop(1,"#f7df9b");
+ ctx.fillStyle=g;
+ ctx.fillRect(0,0,innerWidth,innerHeight);
+
+ ctx.fillStyle="#ffe477";
+ ctx.beginPath();
+ ctx.arc(innerWidth-100,100,50,0,Math.PI*2);
+ ctx.fill();
+
+ clouds.forEach(c=>{
+   let x=c.x-camera*.2;
+   if(x<-200||x>innerWidth+200)return;
+   ctx.fillStyle="rgba(255,255,255,.85)";
+   ctx.beginPath();
+   ctx.arc(x,c.y,35*c.s,0,Math.PI*2);
+   ctx.arc(x+35*c.s,c.y-15*c.s,42*c.s,0,Math.PI*2);
+   ctx.arc(x+75*c.s,c.y,32*c.s,0,Math.PI*2);
+   ctx.fill();
+ });
+}
+
+function drawTree(t){
+ let x=t.x-camera;
+ if(x<-100||x>innerWidth+100)return;
+
+ ctx.save();
+ ctx.translate(x,t.y);
+ ctx.scale(t.s,t.s);
+
+ ctx.fillStyle="#79502b";
+ ctx.fillRect(-10,-100,20,100);
+
+ ctx.fillStyle="#0b7a3e";
+ [[-35,-105],[0,-130],[35,-105],[0,-80]].forEach(p=>{
+   ctx.beginPath();
+   ctx.arc(p[0],p[1],38,0,Math.PI*2);
+   ctx.fill();
+ });
+
+ ctx.fillStyle="#0e9f52";
+ ctx.beginPath();
+ ctx.arc(0,-110,30,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.restore();
+}
+
+function drawPlayer(){
+ let x=player.x-camera;
+ let y=player.y;
+
+ ctx.save();
+ ctx.translate(x,y);
+
+ // shadow
+ ctx.fillStyle="rgba(0,0,0,.2)";
+ ctx.beginPath();
+ ctx.ellipse(21,64,25,7,0,0,Math.PI*2);
+ ctx.fill();
+
+ // legs
+ ctx.fillStyle="#4a2b18";
+ ctx.fillRect(8,48,10,17);
+ ctx.fillRect(25,48,10,17);
+
+ // shoes
+ ctx.fillStyle="#222";
+ ctx.fillRect(5,61,15,6);
+ ctx.fillRect(24,61,15,6);
+
+ // body
+ ctx.fillStyle="#ff6b35";
+ ctx.beginPath();
+ ctx.roundRect(6,20,31,33,8);
+ ctx.fill();
+
+ // arms
+ ctx.fillStyle="#9b5b38";
+ ctx.fillRect(1,26,7,22);
+ ctx.fillRect(35,26,7,22);
+
+ // neck
+ ctx.fillRect(16,15,10,9);
+
+ // face
+ ctx.fillStyle="#9b5b38";
+ ctx.beginPath();
+ ctx.arc(21,10,17,0,Math.PI*2);
+ ctx.fill();
+
+ // hair
+ ctx.fillStyle="#16100d";
+ ctx.beginPath();
+ ctx.arc(21,4,18,Math.PI,Math.PI*2);
+ ctx.fill();
+
+ // braids
+ for(let i=0;i<5;i++){
+   ctx.beginPath();
+   ctx.arc(5+i*8,-1,5,0,Math.PI*2);
+   ctx.fill();
+   ctx.fillRect(2+i*8,0,6,13);
+ }
+
+ // eyes
+ ctx.fillStyle="white";
+ ctx.beginPath();
+ ctx.arc(15,9,3,0,Math.PI*2);
+ ctx.arc(27,9,3,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillStyle="#111";
+ ctx.beginPath();
+ ctx.arc(15,9,1.3,0,Math.PI*2);
+ ctx.arc(27,9,1.3,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.restore();
+}
+
+function drawStar(s){
+ if(s.taken)return;
+ let x=s.x-camera;
+ if(x<-50||x>innerWidth+50)return;
+
+ ctx.save();
+ ctx.translate(x,s.y);
+ ctx.rotate(performance.now()/500);
+ ctx.fillStyle="#ffd21f";
+ ctx.beginPath();
+
+ for(let i=0;i<10;i++){
+   let r=i%2===0?s.r:s.r*.45;
+   let a=i*Math.PI/5;
+   ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);
+ }
+ ctx.closePath();
+ ctx.fill();
+ ctx.strokeStyle="#fff4a3";
+ ctx.stroke();
+ ctx.restore();
+}
+
+function drawPlatform(p){
+ let x=p.x-camera;
+ if(x<-300||x>innerWidth+300)return;
+
+ ctx.fillStyle="#85552b";
+ ctx.fillRect(x,p.y,p.w,p.h);
+
+ ctx.fillStyle="#28a852";
+ ctx.fillRect(x,p.y,p.w,8);
+
+ ctx.fillStyle="#45bd61";
+ for(let i=0;i<p.w;i+=30){
+   ctx.fillRect(x+i,p.y-5,15,5);
+ }
+}
+
+function update(){
+ if(!running)return;
+
+ if(keys.ArrowLeft)player.vx=-player.speed;
+ else if(keys.ArrowRight)player.vx=player.speed;
+ else player.vx*=.8;
+
+ player.vy+=.65;
+
+ let oldY=player.y;
+ player.x+=player.vx;
+ player.y+=player.vy;
+ player.grounded=false;
+
+ for(const p of platforms){
+   if(
+     player.x+player.w>p.x &&
+     player.x<p.x+p.w &&
+     oldY+player.h<=p.y &&
+     player.y+player.h>=p.y &&
+     player.vy>=0
+   ){
+     player.y=p.y-player.h;
+     player.vy=0;
+     player.grounded=true;
+   }
+ }
+
+ for(const s of stars){
+   if(!s.taken &&
+      player.x+player.w>s.x-s.r &&
+      player.x<s.x+s.r &&
+      player.y+player.h>s.y-s.r &&
+      player.y<s.y+s.r){
+     s.taken=true;
+     score++;
+     document.getElementById("score").textContent="⭐ "+score;
+   }
+ }
+
+ if(player.y>innerHeight+200){
+   createWorld();
+ }
+
+ camera=player.x-180;
+ if(camera<0)camera=0;
+}
+
+function draw(){
+ drawSky();
+
+ trees.forEach(drawTree);
+ platforms.forEach(drawPlatform);
+ stars.forEach(drawStar);
+ drawPlayer();
+
+ // ocean
+ ctx.fillStyle="#18aee5";
+ ctx.fillRect(0,innerHeight-45,innerWidth,45);
+
+ ctx.fillStyle="#fff";
+ for(let x=0;x<innerWidth;x+=90){
+   ctx.beginPath();
+   ctx.arc(x,innerHeight-45,25,Math.PI,0);
+   ctx.fill();
+ }
+
+ requestAnimationFrame(draw);
+}
+
+function loop(){
+ update();
+ requestAnimationFrame(loop);
+}
+
+draw();
+loop();
+</script>
+
+</body>
+</html>
