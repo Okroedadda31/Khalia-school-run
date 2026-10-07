@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Khalia School Run - Fixed Platformer</title>
+    <title>Khalia School Run - Long Platform Run</title>
     <style>
       :root {
         --primary: #ff6b35;
@@ -12,43 +12,137 @@
       }
 
       * { box-sizing: border-box; }
-      html, body { margin: 0; height: 100%; font-family: Arial, Helvetica, sans-serif; background: linear-gradient(135deg,#0f3460,#16213e); color:var(--text); }
+      html, body {
+        margin: 0;
+        height: 100%;
+        font-family: Arial, Helvetica, sans-serif;
+        background: linear-gradient(135deg, #0f3460, #16213e);
+        color: var(--text);
+      }
 
-      /* allow scrolling on very small devices so the player can scroll to see the whole game shell */
-      body { overflow: auto; }
+      body {
+        overflow: hidden;
+      }
 
-      .page{display:flex;flex-direction:column;height:100vh}
-      .top-bar{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:linear-gradient(90deg,#ff6b35,#00d4ff);color:#fff}
-      .hud{display:flex;gap:12px}
-      .stat{background:rgba(255,255,255,0.12);padding:6px 10px;border-radius:10px}
+      .page {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
 
-      .game-container{flex:1;display:flex;justify-content:center;align-items:center;padding:10px}
+      .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 16px;
+        background: linear-gradient(90deg, #ff6b35, #00d4ff);
+        color: #fff;
+      }
 
-      /* game-shell will size itself in JS to keep a landscape aspect (16:9) so it looks correct on portrait phones */
-      .game-shell{border-radius:14px;overflow:hidden;border:6px solid #ff6b35;position:relative;background:linear-gradient(180deg,#87ceeb,#e0f6ff);box-shadow:0 20px 60px rgba(0,0,0,0.25)}
+      .hud {
+        display: flex;
+        gap: 12px;
+      }
 
-      canvas{display:block;background:transparent}
+      .stat {
+        background: rgba(255, 255, 255, 0.12);
+        padding: 6px 10px;
+        border-radius: 10px;
+      }
 
-      .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(15,52,96,0.65);z-index:50}
-      .overlay.hidden{opacity:0;pointer-events:none}
-      .modal{background:linear-gradient(135deg,rgba(255,255,255,0.98),rgba(255,107,53,0.12));padding:20px 26px;border-radius:12px;text-align:center}
-      button{background:linear-gradient(135deg,var(--primary),#d84315);border:0;padding:10px 16px;border-radius:10px;color:#fff;font-weight:800;cursor:pointer}
+      .game-container {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 10px;
+      }
 
-      /* debug panel */
-      .debug-panel{position:absolute;right:8px;top:8px;z-index:120;background:rgba(0,0,0,0.6);color:#fff;padding:10px;border-radius:8px;font-family:monospace;font-size:12px;min-width:220px}
-      .debug-row{margin-bottom:6px}
+      .game-shell {
+        position: relative;
+        border-radius: 14px;
+        overflow: hidden;
+        border: 6px solid #ff6b35;
+        background: linear-gradient(180deg, #87ceeb, #e0f6ff);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+      }
 
-      @media (max-width:420px){
-        .top-bar{padding:8px}
-        .modal{padding:14px}
-        .debug-panel{font-size:11px;min-width:180px}
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 52, 96, 0.7);
+        z-index: 50;
+      }
+
+      .overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .modal {
+        background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,107,53,0.12));
+        padding: 20px 26px;
+        border-radius: 12px;
+        text-align: center;
+      }
+
+      .modal h2 {
+        margin: 0 0 12px;
+      }
+
+      .modal p {
+        margin: 0 0 18px;
+        font-weight: 700;
+      }
+
+      button {
+        background: linear-gradient(135deg, var(--primary), #d84315);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 18px;
+        color: white;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .debug-panel {
+        position: absolute;
+        right: 8px;
+        top: 8px;
+        z-index: 120;
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        padding: 10px;
+        border-radius: 8px;
+        font-family: monospace;
+        font-size: 12px;
+        min-width: 220px;
+      }
+
+      .debug-row {
+        margin-bottom: 6px;
+      }
+
+      @media (max-width: 420px) {
+        .top-bar { padding: 8px; }
+        .modal { padding: 14px; }
+        .debug-panel { font-size: 11px; min-width: 180px; }
       }
     </style>
   </head>
   <body>
     <div class="page">
       <div class="top-bar">
-        <div style="font-weight:900;letter-spacing:0.06em">🎮 KHALIA SCHOOL RUN</div>
+        <div style="font-weight: 900; letter-spacing: 0.06em;">🎮 KHALIA SCHOOL RUN</div>
         <div class="hud">
           <div class="stat">Score: <strong id="score">0</strong></div>
           <div class="stat">Lives: <strong id="lives">3</strong></div>
@@ -76,22 +170,11 @@
             <div class="debug-row">lives: <span id="dbg_lives">3</span></div>
             <div class="debug-row">lastLoseReason: <span id="dbg_reason">-</span></div>
           </div>
-
         </div>
       </div>
     </div>
 
     <script>
-      /*
-        Full fixes applied:
-        - Canvas maintains a 16:9 landscape aspect and fits inside the shell. On narrow portrait phones the shell is centered and may be shorter vertically so you can scroll the page to see it.
-        - Player physics and starting position are deterministic and placed exactly on the ground.
-        - Obstacles spawn well off-screen (spawnOffset) and spawn timing is computed from travel time so first obstacle won't hit right after start.
-        - Obstacle speed and spawn intervals reduced for longer gameplay; difficulty ramps slowly.
-        - Lives and loseLife logic implemented properly: loseLife is only triggered by a real collision or falling off; one life removed per event; respawn with safe invulnerability and cannot lose another life immediately.
-        - Debug panel remains so you can see what's causing a life loss.
-      */
-
       const canvas = document.getElementById('gameCanvas');
       const ctx = canvas.getContext('2d');
       const shell = document.getElementById('shell');
@@ -100,7 +183,6 @@
       const scoreEl = document.getElementById('score');
       const livesEl = document.getElementById('lives');
 
-      // debug elements
       const dbg_x = document.getElementById('dbg_x');
       const dbg_y = document.getElementById('dbg_y');
       const dbg_vy = document.getElementById('dbg_vy');
@@ -108,42 +190,16 @@
       const dbg_canLose = document.getElementById('dbg_canLose');
       const dbg_lives = document.getElementById('dbg_lives');
       const dbg_reason = document.getElementById('dbg_reason');
+
       const overlayTitle = document.getElementById('overlayTitle');
       const overlayText = document.getElementById('overlayText');
 
-      // desired aspect ratio (landscape)
       const ASPECT = 16 / 9;
 
-      function resizeCanvasToAspect() {
-        // size the shell to maintain a landscape aspect and fit inside the available viewport
-        const maxShellWidth = Math.min(window.innerWidth - 20, 1400);
-        // compute width constrained by height as well: width <= availableHeight * aspect
-        const maxByHeight = (window.innerHeight - 160) * ASPECT; // leave room for UI
-        const targetWidth = Math.min(maxShellWidth, maxByHeight);
-        const targetHeight = Math.round(targetWidth / ASPECT);
-
-        shell.style.width = Math.round(targetWidth) + 'px';
-        shell.style.height = Math.round(targetHeight) + 'px';
-
-        canvas.width = Math.round(targetWidth);
-        canvas.height = Math.round(targetHeight);
-
-        computeGround();
-        // if player exists, ensure placed on ground (but don't nudge while mid-run)
-        if (!state.running) placePlayerOnGround();
-      }
-
-      window.addEventListener('resize', resizeCanvasToAspect);
-      // initial call
-      resizeCanvasToAspect();
-
-      // ground
       let groundHeight = 0;
       let groundY = 0;
-      function computeGround(){
-        groundHeight = canvas.height * 0.18;
-        groundY = canvas.height - groundHeight;
-      }
+      let worldWidth = 180000;
+      let worldLeft = 0;
 
       const state = {
         running: false,
@@ -151,66 +207,179 @@
         time: 0,
         lastFrame: 0,
         difficulty: 1,
-        obstacleSpeed: 140, // px/s (reduced)
-        obstacles: [],
-        particles: [],
-        clouds: [],
-        themes: [
-          {name:'Caribbean', sky:['#aee9ff','#dffaff'], ground:['#7ecb66','#5dbb63','#2e8b57'], sunX:0.84, sunY:0.16},
-          {name:'Dawn', sky:['#ffe8b0','#ffd6a5'], ground:['#ffd6a5','#ffb88c','#e67e22'], sunX:0.75, sunY:0.18},
-          {name:'Beach', sky:['#bdf0ff','#e0fbff'], ground:['#f7e7a9','#f1d68a','#e09f3e'], sunX:0.9, sunY:0.14}
-        ],
-
-        player: { x: 0, y: 0, w: 50, h: 80, vy: 0, jumpPower: 820, isJumping: false },
-
-        // lives and invulnerability
         lives: 3,
         invulTime: 0,
-        invulDuration: 1.6,
+        invulDuration: 1.5,
         canLoseLife: true,
         lastLoseReason: null,
-
-        // spawn settings
-        spawnOffset: 420, // spawn further offscreen so travel time is longer
-        spawnTimer: 3.0,
-
-        // safety: small cooldown after respawn before obstacles can hurt player again
-        postRespawnCooldown: 0.15
+        cameraX: 0,
+        spawnOffset: 280,
+        player: {
+          x: 120,
+          y: 0,
+          w: 48,
+          h: 78,
+          vx: 0,
+          vy: 0,
+          speed: 260,
+          jumpPower: 840,
+          grounded: true,
+          onGround: true,
+          isJumping: false,
+          facing: 1
+        },
+        platforms: [],
+        obstacles: [],
+        clouds: [],
+        particles: [],
+        themeIndex: 0,
+        themes: [
+          { skyA: '#aee9ff', skyB: '#dffaff', groundA: '#7ecb66', groundB: '#5dbb63', groundC: '#2e8b57', sunX: 0.82, sunY: 0.16 },
+          { skyA: '#ffd6a5', skyB: '#ffe8b0', groundA: '#ffd6a5', groundB: '#ffb88c', groundC: '#e67e22', sunX: 0.75, sunY: 0.17 },
+          { skyA: '#bdf0ff', skyB: '#e0fbff', groundA: '#f7e7a9', groundB: '#f1d68a', groundC: '#e09f3e', sunX: 0.9, sunY: 0.14 }
+        ]
       };
 
-      function placePlayerOnGround(){
-        state.player.x = Math.round(canvas.width * 0.12);
-        state.player.y = groundY - state.player.h;
-        state.player.vy = 0;
-        state.player.isJumping = false;
+      function resizeCanvasToAspect() {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        let targetWidth = Math.min(vw - 18, 1400);
+        let targetHeight = Math.round(targetWidth / ASPECT);
+        const availableHeight = Math.max(120, vh - 120);
+
+        if (targetHeight > availableHeight) {
+          targetHeight = availableHeight;
+          targetWidth = Math.round(targetHeight * ASPECT);
+          if (targetWidth > vw - 10) {
+            targetWidth = Math.max(100, vw - 10);
+            targetHeight = Math.round(targetWidth / ASPECT);
+          }
+        }
+
+        shell.style.width = targetWidth + 'px';
+        shell.style.height = targetHeight + 'px';
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+
+        computeGround();
+        if (!state.running) placePlayerOnGround();
       }
 
-      function updateHud(){
+      function computeGround() {
+        groundHeight = canvas.height * 0.18;
+        groundY = canvas.height - groundHeight;
+      }
+
+      function placePlayerOnGround() {
+        const p = state.player;
+        p.x = 120;
+        p.y = groundY - p.h;
+        p.vx = 0;
+        p.vy = 0;
+        p.grounded = true;
+        p.onGround = true;
+        p.isJumping = false;
+      }
+
+      function updateHud() {
         scoreEl.textContent = Math.floor(state.score);
         livesEl.textContent = state.lives;
         dbg_lives.textContent = state.lives;
       }
 
-      function spawnObstacle(){
-        const height = 28 + Math.random() * 60;
-        const width = 24 + Math.random() * 30;
-        const colors = ['#ff6b35','#00d4ff','#ffd60a','#06d6a0','#ff006e'];
-        const color = colors[Math.floor(Math.random()*colors.length)];
-        const x = canvas.width + state.spawnOffset;
-        const obstacle = { x, y: groundY - height, w: width, h: height, color, hit:false };
-        state.obstacles.push(obstacle);
-      }
+      function createLevel() {
+        state.platforms = [];
+        state.obstacles = [];
 
-      function spawnParticles(x,y,color,count=8){
-        for(let i=0;i<count;i++){
-          const angle = (Math.PI*2*i)/count;
-          state.particles.push({x,y,vx:Math.cos(angle)*200,vy:Math.sin(angle)*200-80,life:0.8,maxLife:0.8,color,size:4+Math.random()*6});
+        state.platforms.push({ x: 0, y: groundY, w: worldWidth, h: groundHeight, type: 'ground' });
+
+        // elevated platforms in the long level
+        const elevated = [
+          { x: 900, y: groundY - 120, w: 450, h: 18 },
+          { x: 2200, y: groundY - 150, w: 420, h: 18 },
+          { x: 4100, y: groundY - 110, w: 550, h: 18 },
+          { x: 6600, y: groundY - 160, w: 480, h: 18 },
+          { x: 9300, y: groundY - 140, w: 560, h: 18 },
+          { x: 11800, y: groundY - 170, w: 460, h: 18 },
+          { x: 14000, y: groundY - 140, w: 540, h: 18 },
+          { x: 16200, y: groundY - 180, w: 620, h: 18 },
+        ];
+
+        for (const plat of elevated) {
+          state.platforms.push({ ...plat, type: 'platform' });
+        }
+
+        // add obstacles along the run, spaced to create a long course with room to navigate
+        const obstacleXs = [
+          700, 1100, 1550, 2100, 2700, 3300, 4180, 4900, 5600, 6200, 6900, 7600,
+          8300, 9000, 9800, 10500, 11200, 12050, 12800, 13600, 14400, 15100, 15850, 16600,
+          17120, 17700, 18320, 18900, 19580, 20150, 20720, 21350, 22010, 22630, 23320
+        ];
+
+        for (const x of obstacleXs) {
+          const y = groundY - 28;
+          state.obstacles.push({ x, y, w: 26, h: 28, color: '#ff6b35', hit: false });
+        }
+
+        // some elevated obstacles
+        const elevatedObstacles = [
+          { x: 920, y: groundY - 138, w: 26, h: 28 },
+          { x: 2350, y: groundY - 172, w: 26, h: 28 },
+          { x: 4320, y: groundY - 128, w: 26, h: 28 },
+          { x: 6820, y: groundY - 188, w: 26, h: 28 },
+          { x: 9650, y: groundY - 168, w: 26, h: 28 },
+          { x: 11950, y: groundY - 198, w: 26, h: 28 },
+          { x: 14250, y: groundY - 168, w: 26, h: 28 },
+          { x: 16480, y: groundY - 208, w: 26, h: 28 },
+        ];
+
+        for (const o of elevatedObstacles) {
+          state.obstacles.push({ ...o, color: '#00d4ff', hit: false });
         }
       }
 
-      // loseLife: decrement lives once and respawn safely; record reason for debug
-      function loseLife(reason){
-        // ensure only one life lost per event and respect invulnerability
+      function initScene() {
+        state.clouds = [
+          { x: canvas.width * 0.12, y: canvas.height * 0.15, s: 0.9, opacity: 0.9 },
+          { x: canvas.width * 0.40, y: canvas.height * 0.22, s: 1.05, opacity: 0.75 },
+          { x: canvas.width * 0.75, y: canvas.height * 0.12, s: 1.2, opacity: 0.8 }
+        ];
+        placePlayerOnGround();
+        createLevel();
+      }
+
+      function resetGame() {
+        state.running = false;
+        state.score = 0;
+        state.time = 0;
+        state.difficulty = 1;
+        state.lives = 3;
+        state.invulTime = 0;
+        state.canLoseLife = true;
+        state.lastLoseReason = null;
+        state.cameraX = 0;
+        state.particles = [];
+        placePlayerOnGround();
+        updateHud();
+        dbg_reason.textContent = '-';
+      }
+
+      function startGame() {
+        resetGame();
+        state.running = true;
+        overlay.classList.add('hidden');
+        state.lastFrame = 0;
+        requestAnimationFrame(loop);
+      }
+
+      function endGame() {
+        state.running = false;
+        overlayTitle.textContent = '💥 GAME OVER 💥';
+        overlayText.innerHTML = `<strong>Final Score: ${Math.floor(state.score)}</strong><br/>Lives: ${state.lives}`;
+        overlay.classList.remove('hidden');
+      }
+
+      function loseLife(reason) {
         if (!state.canLoseLife || state.invulTime > 0) return;
         state.canLoseLife = false;
         state.lastLoseReason = reason;
@@ -218,261 +387,338 @@
 
         state.lives = Math.max(0, state.lives - 1);
         updateHud();
+        spawnParticles(state.player.x + state.player.w / 2, state.player.y + state.player.h / 2, '#ff3333', 12);
 
-        spawnParticles(state.player.x + state.player.w/2, state.player.y + state.player.h/2, '#ff3333', 12);
-
-        if (state.lives <= 0){
-          // final death
+        if (state.lives <= 0) {
           endGame();
           return;
         }
 
-        // respawn on ground safely
-        placePlayerOnGround();
-
-        // grant invulnerability and a short cooldown before canLoseLife becomes true again
+        const respawnX = Math.max(120, state.player.x - 220);
+        state.player.x = respawnX;
+        state.player.y = groundY - state.player.h;
+        state.player.vy = 0;
+        state.player.grounded = true;
+        state.player.isJumping = false;
+        state.cameraX = Math.max(0, respawnX - canvas.width * 0.25);
         state.invulTime = state.invulDuration;
-        state.canLoseLife = false;
-        setTimeout(()=>{ state.canLoseLife = true; }, (state.invulDuration + state.postRespawnCooldown) * 1000);
       }
 
-      function checkCollision(player, obstacle){
-        const margin = 6;
-        return (
-          player.x + margin < obstacle.x + obstacle.w &&
-          player.x + player.w - margin > obstacle.x &&
-          player.y + margin < obstacle.y + obstacle.h &&
-          player.y + player.h > obstacle.y + margin
-        );
+      function jump() {
+        const p = state.player;
+        if (p.grounded && !p.isJumping) {
+          p.vy = -p.jumpPower;
+          p.grounded = false;
+          p.isJumping = true;
+          spawnParticles(p.x + p.w / 2, p.y + p.h, '#00d4ff', 6);
+        }
       }
 
-      function checkFall(){
-        if (state.player.y > canvas.height + 60){
+      function spawnParticles(x, y, color, count = 8) {
+        for (let i = 0; i < count; i++) {
+          const angle = (Math.PI * 2 * i) / count;
+          state.particles.push({
+            x, y,
+            vx: Math.cos(angle) * 200,
+            vy: Math.sin(angle) * 200 - 80,
+            life: 0.8,
+            maxLife: 0.8,
+            color,
+            size: 4 + Math.random() * 6
+          });
+        }
+      }
+
+      function updateParticles(dt) {
+        for (let i = state.particles.length - 1; i >= 0; i--) {
+          const p = state.particles[i];
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.vy += 1200 * dt;
+          p.life -= dt;
+          if (p.life <= 0) state.particles.splice(i, 1);
+        }
+      }
+
+      function getPlayerRect() {
+        const p = state.player;
+        return { x: p.x, y: p.y, w: p.w, h: p.h };
+      }
+
+      function rectIntersect(a, b) {
+        return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+      }
+
+      function updatePlayer(dt) {
+        const p = state.player;
+        const left = keys.left;
+        const right = keys.right;
+
+        p.vx = 0;
+        if (left) p.vx = -p.speed;
+        if (right) p.vx = p.speed;
+
+        if (p.vx !== 0) p.facing = p.vx > 0 ? 1 : -1;
+
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+
+        p.vy += 1900 * dt;
+        if (p.grounded) p.vy = 0;
+
+        p.grounded = false;
+        let standingOn = null;
+
+        for (const plat of state.platforms) {
+          const playerRect = getPlayerRect();
+          const prevY = playerRect.y - p.vy * dt; // rough previous position approximation
+          const prevBottom = prevY + playerRect.h;
+          const platTop = plat.y;
+          const platBottom = plat.y + plat.h;
+
+          const overlapsHoriz = playerRect.x + playerRect.w > plat.x && playerRect.x < plat.x + plat.w;
+          const wasAbove = prevBottom <= platTop + 12;
+          const nowTouching = playerRect.y + playerRect.h >= platTop && playerRect.y + playerRect.h <= platTop + 24;
+
+          if (overlapsHoriz && wasAbove && nowTouching) {
+            p.y = platTop - p.h;
+            p.vy = 0;
+            p.grounded = true;
+            p.onGround = true;
+            p.isJumping = false;
+            standingOn = plat;
+            break;
+          }
+        }
+
+        // if under the world or off screen below
+        if (p.y > canvas.height + 200) {
           loseLife('fell off world');
         }
-      }
 
-      function updatePlayer(dt){
-        const p = state.player;
-        p.vy += 1800 * dt; // gravity
-        p.y += p.vy * dt;
-        const groundTop = groundY - p.h;
-        let grounded = false;
-        if (p.y >= groundTop - 0.5){
-          p.y = groundTop;
-          p.vy = 0;
-          p.isJumping = false;
-          grounded = true;
-        }
-        return { grounded };
-      }
+        // bound player to world
+        p.x = Math.max(50, Math.min(worldWidth - p.w - 20, p.x));
 
-      function updateObstacles(dt){
-        for (let i = state.obstacles.length - 1; i >= 0; i--){
-          const o = state.obstacles[i];
-          o.x -= state.obstacleSpeed * dt * state.difficulty;
-
-          // collision only if not invulnerable and canLoseLife
-          if (state.canLoseLife && state.invulTime <= 0 && checkCollision(state.player, o)){
-            if (!o.hit){
-              o.hit = true; // prevent double-hit
-              loseLife('collision with obstacle');
-            }
-          }
-
-          // remove obstacles once fully left screen
-          if (o.x + o.w < -120){
-            state.obstacles.splice(i,1);
-            state.score += 20;
-          }
-        }
-      }
-
-      function endGame(){
-        state.running = false;
-        overlay.classList.remove('hidden');
-        overlayTitle.textContent = '💥 GAME OVER 💥';
-        overlayText.innerHTML = `<strong>Final Score: ${Math.floor(state.score)}</strong><br/>Lives: ${state.lives}`;
-      }
-
-      function jump(){
-        const p = state.player;
-        const groundTop = groundY - p.h;
-        if (!p.isJumping && p.y >= groundTop - 2){
-          p.vy = -p.jumpPower;
+        // if not grounded after jump, keep jump state
+        if (!p.grounded && !p.isJumping) {
           p.isJumping = true;
         }
+
+        return { grounded: p.grounded, standingOn };
       }
 
-      document.addEventListener('keydown', (e)=>{
-        if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW'){
-          e.preventDefault();
-          if (!state.running) startGame();
-          jump();
+      function updateObstacles(dt) {
+        for (let i = state.obstacles.length - 1; i >= 0; i--) {
+          const obstacle = state.obstacles[i];
+
+          if (!obstacle.hit && rectIntersect(getPlayerRect(), obstacle)) {
+            loseLife('collision with obstacle');
+            obstacle.hit = true;
+          }
         }
-      });
-
-      canvas.addEventListener('touchstart', (e)=>{ e.preventDefault(); if (!state.running) startGame(); jump(); }, { passive:false });
-
-      // spawning and start logic
-      function startGame(){
-        // compute spawn so first obstacle arrives well after any initial invulnerability or first-second
-        state.obstacles = [];
-        state.score = 0;
-        state.time = 0;
-        state.difficulty = 1;
-        state.invulTime = 0;
-        state.canLoseLife = true;
-        state.lastLoseReason = null;
-        dbg_reason.textContent = '-';
-
-        placePlayerOnGround();
-
-        // determine spawnTimer so obstacle travelTime > minimal safe window
-        const spawnX = canvas.width + state.spawnOffset;
-        const travelDistance = spawnX - state.player.x;
-        const travelTime = travelDistance / Math.max(60, state.obstacleSpeed); // avoid divide by near-zero
-
-        // ensure first obstacle arrives after a comfortable window: travelTime * 0.6 + 1.0 seconds
-        state.spawnTimer = Math.max(1.6, travelTime * 0.6 + 1.0);
-
-        state.running = true;
-        overlay.classList.add('hidden');
-        state.lastFrame = 0;
-        requestAnimationFrame(loop);
       }
 
-      // reset game to initial state
-      function resetGame(){
-        state.running = false;
-        state.score = 0;
-        state.time = 0;
-        state.difficulty = 1;
-        state.obstacles = [];
-        state.particles = [];
-        state.lives = 3;
-        state.invulTime = 0;
-        state.canLoseLife = true;
-        state.spawnTimer = 2.6;
-        placePlayerOnGround();
+      function checkCamera() {
+        const p = state.player;
+        const followX = canvas.width * 0.28;
+        const targetCameraX = Math.max(0, Math.min(worldWidth - canvas.width, p.x - followX));
+        state.cameraX += (targetCameraX - state.cameraX) * 0.12;
+      }
+
+      function update(dt) {
+        state.time += dt;
+        state.score += dt * 12;
+        state.difficulty = 1 + (state.time / 180);
+
+        if (state.invulTime > 0) {
+          state.invulTime = Math.max(0, state.invulTime - dt);
+          if (state.invulTime === 0) state.canLoseLife = true;
+        }
+
+        updatePlayer(dt);
+        updateObstacles(dt);
+        updateParticles(dt);
+
+        // move clouds slightly slower than player, for world motion feel
+        for (const cloud of state.clouds) {
+          cloud.x -= 8 * dt;
+          if (cloud.x < -120) cloud.x = canvas.width + 120;
+        }
+
+        checkCamera();
+
+        dbg_x.textContent = state.player.x.toFixed(1);
+        dbg_y.textContent = state.player.y.toFixed(1);
+        dbg_vy.textContent = state.player.vy.toFixed(1);
+        dbg_grounded.textContent = state.player.grounded ? 'true' : 'false';
+        dbg_canLose.textContent = state.canLoseLife ? 'true' : 'false';
+        dbg_reason.textContent = state.lastLoseReason || '-';
         updateHud();
       }
 
-      // drawing
-      function drawBackground(){
-        const themeIndex = Math.floor(state.time / 20) % state.themes.length;
-        const theme = state.themes[themeIndex];
-        const sky = ctx.createLinearGradient(0,0,0,groundY);
-        sky.addColorStop(0, theme.sky[0]);
-        sky.addColorStop(0.5, theme.sky[1]);
+      function drawBackground() {
+        const theme = state.themes[state.themeIndex];
+        const sky = ctx.createLinearGradient(0, 0, 0, groundY);
+        sky.addColorStop(0, theme.skyA);
+        sky.addColorStop(0.5, theme.skyB);
         sky.addColorStop(0.8, '#fdf4d2');
-        ctx.fillStyle = sky; ctx.fillRect(0,0,canvas.width,groundY);
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, canvas.width, groundY);
 
-        // sun
-        ctx.fillStyle = '#ffd60a'; ctx.beginPath(); ctx.arc(canvas.width * theme.sunX, canvas.height * theme.sunY, 36, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#ffd60a';
+        ctx.beginPath();
+        ctx.arc(canvas.width * theme.sunX, canvas.height * theme.sunY, 36, 0, Math.PI * 2);
+        ctx.fill();
 
-        // clouds
-        for (const c of state.clouds){ ctx.fillStyle = `rgba(255,255,255,${c.opacity})`; ctx.beginPath(); ctx.arc(c.x,c.y,22*c.s,0,Math.PI*2); ctx.fill(); }
+        for (const cloud of state.clouds) {
+          ctx.fillStyle = `rgba(255,255,255,${cloud.opacity})`;
+          ctx.beginPath();
+          ctx.arc(cloud.x, cloud.y, 22 * cloud.s, 0, Math.PI * 2);
+          ctx.arc(cloud.x + 32 * cloud.s, cloud.y - 10, 18 * cloud.s, 0, Math.PI * 2);
+          ctx.arc(cloud.x + 58 * cloud.s, cloud.y, 22 * cloud.s, 0, Math.PI * 2);
+          ctx.fill();
+        }
 
-        // ground
-        const groundGrad = ctx.createLinearGradient(0,groundY,0,canvas.height);
-        groundGrad.addColorStop(0, theme.ground[0]); groundGrad.addColorStop(0.6, theme.ground[1]); groundGrad.addColorStop(1, theme.ground[2]);
-        ctx.fillStyle = groundGrad; ctx.fillRect(0,groundY,canvas.width,groundHeight);
-
-        // moving markers to imply forward motion
-        ctx.fillStyle = 'rgba(255,255,255,0.12)';
-        const markerSpeed = 120 * state.difficulty;
-        const offset = Math.floor((state.time * markerSpeed) % 50);
-        for (let x = -50 + offset; x < canvas.width + 50; x += 50) ctx.fillRect(x, groundY - 6, 20, 12);
+        const groundGrad = ctx.createLinearGradient(0, groundY, 0, canvas.height);
+        groundGrad.addColorStop(0, theme.groundA);
+        groundGrad.addColorStop(0.55, theme.groundB);
+        groundGrad.addColorStop(1, theme.groundC);
+        ctx.fillStyle = groundGrad;
+        ctx.fillRect(0, groundY, canvas.width, groundHeight);
       }
 
-      function drawPlayer(){
-        const p = state.player;
+      function drawWorld() {
         ctx.save();
-        ctx.translate(p.x + p.w/2, p.y + p.h/2);
-        if (p.vy > 100) ctx.rotate(0.06);
-        ctx.translate(-p.w/2, -p.h/2);
-        ctx.fillStyle = '#ff6b35'; ctx.fillRect(p.x + 12, p.y + 22, 26, 38);
-        ctx.fillStyle = '#f4a460'; ctx.beginPath(); ctx.arc(p.x + 25, p.y + 12, 14, 0, Math.PI*2); ctx.fill();
+        ctx.translate(-state.cameraX, 0);
+
+        for (const plat of state.platforms) {
+          if (plat.type === 'ground') {
+            ctx.fillStyle = '#549d3b';
+            ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
+            ctx.fillStyle = 'rgba(255,255,255,0.08)';
+            for (let x = plat.x; x < plat.x + plat.w; x += 30) {
+              ctx.fillRect(x, plat.y - 4, 14, 10);
+            }
+          } else {
+            ctx.fillStyle = '#6ea24a';
+            ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
+            ctx.fillStyle = '#b9d97b';
+            ctx.fillRect(plat.x, plat.y + 3, plat.w, 4);
+          }
+        }
+
+        for (const obstacle of state.obstacles) {
+          ctx.fillStyle = obstacle.color;
+          ctx.fillRect(obstacle.x, obstacle.y, obstacle.w, obstacle.h);
+          ctx.fillStyle = 'rgba(255,255,255,0.2)';
+          ctx.fillRect(obstacle.x + 4, obstacle.y + 4, obstacle.w - 8, obstacle.h / 3);
+        }
+
+        drawParticlesWorld();
+        drawPlayerWorld();
         ctx.restore();
       }
 
-      function drawObstacles(){
-        for (const o of state.obstacles){ ctx.save(); ctx.fillStyle = o.color; ctx.fillRect(o.x, o.y, o.w, o.h); ctx.restore(); }
-      }
-
-      function drawParticles(){
-        for (const p of state.particles){ ctx.fillStyle = p.color; ctx.globalAlpha = p.life / p.maxLife; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill(); }
+      function drawParticlesWorld() {
+        for (const p of state.particles) {
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.life / p.maxLife;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
         ctx.globalAlpha = 1;
       }
 
-      function loop(ts){
+      function drawPlayerWorld() {
+        const p = state.player;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+
+        ctx.fillStyle = '#ff6b35';
+        ctx.fillRect(12, 22, 26, 38);
+
+        ctx.fillStyle = '#f4a460';
+        ctx.beginPath();
+        ctx.arc(25, 12, 14, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(20, 8, 2.5, 0, Math.PI * 2);
+        ctx.arc(30, 8, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(25, 13, 5, 0, Math.PI);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBackground();
+        drawWorld();
+      }
+
+      function loop(ts) {
         if (!state.running) return;
         if (!state.lastFrame) state.lastFrame = ts;
         const dt = Math.min((ts - state.lastFrame) / 1000, 0.06);
         state.lastFrame = ts;
 
-        // update
-        state.time += dt;
-        state.score += dt * 8 * state.difficulty; // slower scoring so runs are longer
-        state.difficulty = 1 + state.time / 120; // very gentle ramp
-
-        // invulnerability countdown
-        if (state.invulTime > 0){ state.invulTime = Math.max(0, state.invulTime - dt); }
-
-        // clouds movement
-        for (const c of state.clouds){ c.x -= 18 * dt * c.s; if (c.x < -120) c.x = canvas.width + 120; }
-
-        const { grounded } = updatePlayer(dt);
-        checkFall();
-        updateObstacles(dt);
-
-        // particles
-        for (let i = state.particles.length - 1; i >= 0; i--){ const p = state.particles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 1200 * dt; p.life -= dt; if (p.life <= 0) state.particles.splice(i,1); }
-
-        // spawn
-        state.spawnTimer -= dt;
-        if (state.spawnTimer <= 0){ spawnObstacle(); state.spawnTimer = Math.max(1.2, 2.8 - state.difficulty * 0.06); }
-
-        updateHud();
-
-        // debug values
-        dbg_x.textContent = state.player.x.toFixed(1);
-        dbg_y.textContent = state.player.y.toFixed(1);
-        dbg_vy.textContent = state.player.vy.toFixed(1);
-        dbg_grounded.textContent = grounded ? 'true' : 'false';
-        dbg_canLose.textContent = (state.canLoseLife && state.invulTime <= 0) ? 'true' : 'false';
-        dbg_reason.textContent = state.lastLoseReason || '-';
-
-        // render
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        drawBackground(); drawObstacles(); drawParticles(); drawPlayer();
+        update(dt);
+        render();
 
         if (state.running) requestAnimationFrame(loop);
       }
 
-      // input handlers
-      document.addEventListener('keydown', (e)=>{ if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW'){ e.preventDefault(); if (!state.running) startGame(); jump(); } });
-      canvas.addEventListener('touchstart', (e)=>{ e.preventDefault(); if (!state.running) startGame(); jump(); }, { passive:false });
-      startBtn.addEventListener('click', ()=>{ if (!state.running) startGame(); });
+      const keys = { left: false, right: false };
 
-      // initial scene
-      function initScene(){
-        state.clouds = [ {x: canvas.width*0.14, y: canvas.height*0.16, s:0.9, opacity:0.9}, {x: canvas.width*0.45, y: canvas.height*0.24, s:1.05, opacity:0.75}, {x: canvas.width*0.75, y: canvas.height*0.12, s:1.2, opacity:0.8} ];
-        placePlayerOnGround();
+      document.addEventListener('keydown', (event) => {
+        if (event.code === 'ArrowLeft' || event.code === 'KeyA') keys.left = true;
+        if (event.code === 'ArrowRight' || event.code === 'KeyD') keys.right = true;
+        if (event.code === 'Space' || event.code === 'ArrowUp' || event.code === 'KeyW') {
+          event.preventDefault();
+          if (!state.running) startGame();
+          jump();
+        }
+      });
+
+      document.addEventListener('keyup', (event) => {
+        if (event.code === 'ArrowLeft' || event.code === 'KeyA') keys.left = false;
+        if (event.code === 'ArrowRight' || event.code === 'KeyD') keys.right = false;
+      });
+
+      canvas.addEventListener('touchstart', (event) => {
+        event.preventDefault();
+        if (!state.running) startGame();
+        jump();
+      }, { passive: false });
+
+      startBtn.addEventListener('click', () => {
+        if (!state.running) startGame();
+      });
+
+      window.addEventListener('resize', resizeCanvasToAspect);
+
+      function main() {
+        resizeCanvasToAspect();
+        initScene();
+        resetGame();
+        updateHud();
+        render();
       }
 
-      // expose debugging helpers
-      window._state = state; window._loseLife = loseLife; window._spawnObstacle = spawnObstacle; window._placePlayer = placePlayerOnGround;
+      main();
 
-      // Kick off
-      resizeCanvasToAspect(); initScene(); resetGame();
-
-      // update hud initially
-      updateHud();
-
-      // make sure page can be scrolled to view shell on small portrait devices
-      // (no-op here, CSS allows scrolling)
+      window._state = state;
+      window._loseLife = loseLife;
+      window._jump = jump;
+      window._placePlayer = placePlayerOnGround;
     </script>
   </body>
 </html>
