@@ -296,6 +296,7 @@
       let bestScore = Number(localStorage.getItem(bestKey) || 0);
       bestEl.textContent = bestScore;
 
+      // Ground computed from canvas size at load/resize
       const groundHeight = canvas.height * 0.18;
       const groundY = canvas.height - groundHeight;
 
@@ -303,10 +304,15 @@
         running: false,
         score: 0,
         time: 0,
-        spawnTimer: 1.0,
+        // spawnTimer controls how often new obstacles appear
+        spawnTimer: 1.2,
         lastFrame: 0,
         difficulty: 1,
         particles: [],
+        // Grace period at the start of each run: player can't die for a short time
+        startGrace: 1.6, // seconds
+        // obstacle speed baseline (px per second) - lowered so game isn't instant-death
+        obstacleSpeed: 300,
         player: {
           x: canvas.width * 0.12,
           y: groundY - 80,
@@ -323,6 +329,12 @@
           { x: canvas.width * 0.35, y: canvas.height * 0.25, s: 1.1, opacity: 0.7 },
           { x: canvas.width * 0.65, y: canvas.height * 0.12, s: 1.2, opacity: 0.8 },
           { x: canvas.width * 0.85, y: canvas.height * 0.28, s: 0.95, opacity: 0.75 }
+        ],
+        // visual themes (we'll pick one based on time/score to give variety)
+        themes: [
+          { name: 'Caribbean', sky: ['#aee9ff', '#dffaff'], ground: ['#7ecb66', '#5dbb63', '#2e8b57'], sunX: 0.84, sunY: 0.16 },
+          { name: 'Dawn', sky: ['#ffe8b0', '#ffd6a5'], ground: ['#ffd6a5', '#ffb88c', '#e67e22'], sunX: 0.75, sunY: 0.18 },
+          { name: 'Beach', sky: ['#bdf0ff', '#e0fbff'], ground: ['#f7e7a9', '#f1d68a', '#e09f3e'], sunX: 0.9, sunY: 0.14 }
         ]
       };
 
@@ -336,13 +348,14 @@
         state.score = 0;
         state.time = 0;
         state.difficulty = 1;
-        state.spawnTimer = 1.0;
+        state.spawnTimer = 1.8; // slightly longer before first obstacle
         state.lastFrame = 0;
         state.player.y = groundY - state.player.h;
         state.player.vy = 0;
         state.player.isJumping = false;
         state.obstacles = [];
         state.particles = [];
+        state.startGrace = 1.6; // give player a short invulnerability for "get ready"
         updateHud();
       }
 
@@ -424,8 +437,11 @@
 
       function update(dt) {
         state.time += dt;
-        state.score += dt * 18 * state.difficulty;
-        state.difficulty = 1 + state.time / 25;
+        state.score += dt * 12 * state.difficulty; // slower score growth so runs last longer
+        state.difficulty = 1 + state.time / 30;
+
+        // Reduce grace over time; while grace > 0 there are no collisions
+        if (state.startGrace > 0) state.startGrace = Math.max(0, state.startGrace - dt);
 
         const player = state.player;
         player.vy += 1900 * dt;
@@ -450,14 +466,17 @@
         state.spawnTimer -= dt;
         if (state.spawnTimer <= 0) {
           spawnObstacle();
-          state.spawnTimer = Math.max(0.5, 1.2 - state.difficulty * 0.08);
+          // spawn rate reduces as difficulty increases but with a lower cap
+          state.spawnTimer = Math.max(0.6, 1.6 - state.difficulty * 0.06);
         }
 
         for (let i = state.obstacles.length - 1; i >= 0; i--) {
           const obstacle = state.obstacles[i];
-          obstacle.x -= 430 * dt * state.difficulty;
+          // use global obstacleSpeed which we lowered from the previous value
+          obstacle.x -= state.obstacleSpeed * dt * state.difficulty;
 
-          if (checkCollision(player, obstacle)) {
+          // Only check collisions if grace period ended
+          if (state.startGrace <= 0 && checkCollision(player, obstacle)) {
             spawnParticles(obstacle.x + obstacle.w / 2, obstacle.y + obstacle.h / 2, obstacle.color, 12);
             endGame();
             return;
@@ -465,7 +484,7 @@
 
           if (obstacle.x + obstacle.w < 0) {
             state.obstacles.splice(i, 1);
-            state.score += 25;
+            state.score += 20;
           }
         }
 
@@ -473,21 +492,27 @@
       }
 
       function drawBackground() {
+        // pick a theme based on time so the background changes every ~20s
+        const themeIndex = Math.floor(state.time / 20) % state.themes.length;
+        const theme = state.themes[themeIndex];
+
         const sky = ctx.createLinearGradient(0, 0, 0, groundY);
-        sky.addColorStop(0, '#87ceeb');
-        sky.addColorStop(0.45, '#dff6ff');
+        sky.addColorStop(0, theme.sky[0]);
+        sky.addColorStop(0.45, theme.sky[1]);
         sky.addColorStop(0.7, '#fdf4d2');
         ctx.fillStyle = sky;
         ctx.fillRect(0, 0, canvas.width, groundY);
 
+        // sun
         ctx.fillStyle = '#ffd60a';
         ctx.shadowBlur = 30;
         ctx.shadowColor = 'rgba(255, 214, 10, 0.7)';
         ctx.beginPath();
-        ctx.arc(canvas.width * 0.84, canvas.height * 0.16, 42, 0, Math.PI * 2);
+        ctx.arc(canvas.width * theme.sunX, canvas.height * theme.sunY, 42, 0, Math.PI * 2);
         ctx.fill();
         ctx.shadowBlur = 0;
 
+        // clouds
         for (const cloud of state.clouds) {
           ctx.fillStyle = `rgba(255,255,255,${cloud.opacity})`;
           ctx.beginPath();
@@ -497,16 +522,29 @@
           ctx.fill();
         }
 
+        // ground gradient using theme ground colors
         const groundGrad = ctx.createLinearGradient(0, groundY, 0, canvas.height);
-        groundGrad.addColorStop(0, '#7ecb66');
-        groundGrad.addColorStop(0.5, '#5dbb63');
-        groundGrad.addColorStop(1, '#33691e');
+        groundGrad.addColorStop(0, theme.ground[0]);
+        groundGrad.addColorStop(0.5, theme.ground[1]);
+        groundGrad.addColorStop(1, theme.ground[2]);
         ctx.fillStyle = groundGrad;
         ctx.fillRect(0, groundY, canvas.width, groundHeight);
 
         ctx.fillStyle = 'rgba(255,255,255,0.2)';
         for (let x = 0; x < canvas.width; x += 50) {
           ctx.fillRect(x, groundY - 5, 20, 10);
+        }
+
+        // show "GET READY" message briefly while startGrace > 0
+        if (state.startGrace > 0) {
+          ctx.save();
+          ctx.fillStyle = 'rgba(0,0,0,0.45)';
+          ctx.fillRect(canvas.width/2 - 160, canvas.height/2 - 48, 320, 96);
+          ctx.fillStyle = '#fff';
+          ctx.font = '28px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText('Get Ready!', canvas.width/2, canvas.height/2 + 8);
+          ctx.restore();
         }
       }
 
