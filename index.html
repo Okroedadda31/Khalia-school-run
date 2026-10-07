@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Khalia School Run - Long Platform Run</title>
+    <title>Khalia School Run - Fixed Platformer</title>
     <style>
       :root {
         --primary: #ff6b35;
@@ -20,9 +20,7 @@
         color: var(--text);
       }
 
-      body {
-        overflow: hidden;
-      }
+      body { overflow: hidden; }
 
       .page {
         display: flex;
@@ -132,6 +130,25 @@
         margin-bottom: 6px;
       }
 
+      .rotate-overlay {
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+        background: rgba(10, 10, 20, 0.9);
+        color: white;
+        text-align: center;
+        font-size: clamp(1.2rem, 4vw, 2rem);
+        font-weight: 700;
+        padding: 24px;
+      }
+
+      .rotate-overlay.visible {
+        display: flex;
+      }
+
       @media (max-width: 420px) {
         .top-bar { padding: 8px; }
         .modal { padding: 14px; }
@@ -159,6 +176,10 @@
               <p id="overlayText">Jump over obstacles and race to school! Avoid the cones to survive!</p>
               <button id="startBtn">🚀 START GAME</button>
             </div>
+          </div>
+
+          <div id="rotateOverlay" class="rotate-overlay">
+            Please rotate your phone to landscape mode
           </div>
 
           <div id="debug" class="debug-panel" aria-live="polite">
@@ -193,6 +214,7 @@
 
       const overlayTitle = document.getElementById('overlayTitle');
       const overlayText = document.getElementById('overlayText');
+      const rotateOverlay = document.getElementById('rotateOverlay');
 
       const ASPECT = 16 / 9;
 
@@ -200,6 +222,46 @@
       let groundY = 0;
       let worldWidth = 180000;
       let worldLeft = 0;
+
+      function showFatalOverlay(message) {
+        overlayTitle.textContent = '⚠️ Startup Error';
+        overlayText.textContent = message;
+        overlay.classList.remove('hidden');
+        startBtn.textContent = 'Reload';
+      }
+
+      function setRotateOverlay() {
+        const isPortrait = window.innerHeight > window.innerWidth;
+        rotateOverlay.classList.toggle('visible', isPortrait);
+      }
+
+      async function tryLandscapeLock() {
+        if (screen && screen.orientation && typeof screen.orientation.lock === 'function') {
+          try {
+            await screen.orientation.lock('landscape');
+            setRotateOverlay();
+          } catch (err) {
+            setRotateOverlay();
+          }
+        } else {
+          setRotateOverlay();
+        }
+      }
+
+      window.addEventListener('resize', () => {
+        setRotateOverlay();
+        resizeCanvasToAspect();
+      });
+
+      window.addEventListener('error', (event) => {
+        console.error('Window error:', event.message, event.filename, event.lineno, event.error && event.error.stack);
+        showFatalOverlay(`Runtime error: ${event.message}`);
+      });
+
+      window.addEventListener('unhandledrejection', (event) => {
+        console.error('Unhandled rejection:', event.reason);
+        showFatalOverlay(`Unhandled rejection: ${String(event.reason)}`);
+      });
 
       const state = {
         running: false,
@@ -293,7 +355,6 @@
 
         state.platforms.push({ x: 0, y: groundY, w: worldWidth, h: groundHeight, type: 'ground' });
 
-        // elevated platforms in the long level
         const elevated = [
           { x: 900, y: groundY - 120, w: 450, h: 18 },
           { x: 2200, y: groundY - 150, w: 420, h: 18 },
@@ -309,19 +370,11 @@
           state.platforms.push({ ...plat, type: 'platform' });
         }
 
-        // add obstacles along the run, spaced to create a long course with room to navigate
-        const obstacleXs = [
-          700, 1100, 1550, 2100, 2700, 3300, 4180, 4900, 5600, 6200, 6900, 7600,
-          8300, 9000, 9800, 10500, 11200, 12050, 12800, 13600, 14400, 15100, 15850, 16600,
-          17120, 17700, 18320, 18900, 19580, 20150, 20720, 21350, 22010, 22630, 23320
-        ];
-
+        const obstacleXs = [700, 1100, 1550, 2100, 2700, 3300, 4180, 4900, 5600, 6200, 6900, 7600, 8300, 9000, 9800, 10500, 11200, 12050, 12800, 13600, 14400, 15100, 15850, 16600, 17120, 17700, 18320, 18900, 19580, 20150, 20720, 21350, 22010, 22630, 23320];
         for (const x of obstacleXs) {
-          const y = groundY - 28;
-          state.obstacles.push({ x, y, w: 26, h: 28, color: '#ff6b35', hit: false });
+          state.obstacles.push({ x, y: groundY - 28, w: 26, h: 28, color: '#ff6b35', hit: false });
         }
 
-        // some elevated obstacles
         const elevatedObstacles = [
           { x: 920, y: groundY - 138, w: 26, h: 28 },
           { x: 2350, y: groundY - 172, w: 26, h: 28 },
@@ -460,57 +513,41 @@
 
         if (p.vx !== 0) p.facing = p.vx > 0 ? 1 : -1;
 
+        p.vy += 1900 * dt;
+
+        const prevY = p.y;
         p.x += p.vx * dt;
         p.y += p.vy * dt;
 
-        p.vy += 1900 * dt;
-        if (p.grounded) p.vy = 0;
-
         p.grounded = false;
-        let standingOn = null;
 
         for (const plat of state.platforms) {
-          const playerRect = getPlayerRect();
-          const prevY = playerRect.y - p.vy * dt; // rough previous position approximation
-          const prevBottom = prevY + playerRect.h;
-          const platTop = plat.y;
-          const platBottom = plat.y + plat.h;
-
-          const overlapsHoriz = playerRect.x + playerRect.w > plat.x && playerRect.x < plat.x + plat.w;
-          const wasAbove = prevBottom <= platTop + 12;
-          const nowTouching = playerRect.y + playerRect.h >= platTop && playerRect.y + playerRect.h <= platTop + 24;
+          const overlapsHoriz = p.x + p.w > plat.x && p.x < plat.x + plat.w;
+          const prevBottom = prevY + p.h;
+          const nowBottom = p.y + p.h;
+          const wasAbove = prevBottom <= plat.y + 12;
+          const nowTouching = nowBottom >= plat.y && nowBottom <= plat.y + 18;
 
           if (overlapsHoriz && wasAbove && nowTouching) {
-            p.y = platTop - p.h;
+            p.y = plat.y - p.h;
             p.vy = 0;
             p.grounded = true;
             p.onGround = true;
             p.isJumping = false;
-            standingOn = plat;
             break;
           }
         }
 
-        // if under the world or off screen below
         if (p.y > canvas.height + 200) {
           loseLife('fell off world');
         }
 
-        // bound player to world
         p.x = Math.max(50, Math.min(worldWidth - p.w - 20, p.x));
-
-        // if not grounded after jump, keep jump state
-        if (!p.grounded && !p.isJumping) {
-          p.isJumping = true;
-        }
-
-        return { grounded: p.grounded, standingOn };
       }
 
       function updateObstacles(dt) {
         for (let i = state.obstacles.length - 1; i >= 0; i--) {
           const obstacle = state.obstacles[i];
-
           if (!obstacle.hit && rectIntersect(getPlayerRect(), obstacle)) {
             loseLife('collision with obstacle');
             obstacle.hit = true;
@@ -539,7 +576,6 @@
         updateObstacles(dt);
         updateParticles(dt);
 
-        // move clouds slightly slower than player, for world motion feel
         for (const cloud of state.clouds) {
           cloud.x -= 8 * dt;
           if (cloud.x < -120) cloud.x = canvas.width + 120;
@@ -703,10 +739,15 @@
         if (!state.running) startGame();
       });
 
-      window.addEventListener('resize', resizeCanvasToAspect);
-
       function main() {
+        if (!canvas || !ctx) {
+          showFatalOverlay('Canvas is missing or unsupported on this device.');
+          return;
+        }
+
         resizeCanvasToAspect();
+        setRotateOverlay();
+        tryLandscapeLock();
         initScene();
         resetGame();
         updateHud();
